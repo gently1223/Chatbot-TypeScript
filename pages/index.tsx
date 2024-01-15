@@ -33,7 +33,6 @@ export default function Home({ initialNamespace }: HomeProps) {
     updateChatName,
   } = useChats(selectedNamespace);
 
-  console.log(selectedChatId);
   const nameSpaceHasChats = chatList.length > 0;
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -54,6 +53,8 @@ export default function Home({ initialNamespace }: HomeProps) {
   });
 
   const { messages, history } = messageState;
+
+  // console.log(chatList);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -77,6 +78,12 @@ export default function Home({ initialNamespace }: HomeProps) {
       console.error('Failed to fetch chat history:', error);
     }
   }, [chatId]);
+
+  useEffect(() => {
+    if (!selectedNamespace && namespaces.length > 0) {
+      setSelectedNamespace(namespaces[0]);
+    }
+  }, [namespaces, selectedNamespace, setSelectedNamespace])
 
   useEffect(() => {
     if (selectedChatId) {
@@ -179,8 +186,12 @@ export default function Home({ initialNamespace }: HomeProps) {
 
   return (
     <>
-      <div className="flex bg-gray-900">
-        <div className="flex w-1/6 grow h-screen flex-col gap-y-5 overflow-y-auto bg-gray-800 px-6">
+      <div
+        className={`flex bg-gray-900 pb-40 ${
+          !nameSpaceHasChats ? 'h-screen' : ''
+        }`}
+      >
+        <div className="fixed top-0 left-0 w-1/6 h-screen flex flex-col gap-y-5 overflow-y-auto bg-gray-800 px-6">
           <div className="flex h-16 shrink-0 items-center"></div>
 
           <nav className="flex flex-1 flex-col">
@@ -210,7 +221,7 @@ export default function Home({ initialNamespace }: HomeProps) {
             Settings
           </button>
         </div>
-        <main className="py-10 w-full h-screen">
+        <main className="py-10 w-full h-full pl-72">
           <div className="px-4 sm:px-6 lg:px-8 h-full flex flex-col">
             {nameSpaceHasChats ? (
               <>
@@ -221,21 +232,32 @@ export default function Home({ initialNamespace }: HomeProps) {
                   {chatNames[selectedChatId] || 'Untitled Chat'}
                 </h2>
 
-                <MessageList
-                  messages={messages}
-                  loading={loading}
-                  messageListRef={messageListRef}
-                />
+                <div
+                  className={`flex flex-col items-stretch ${
+                    messages.length > 0 ? 'flex-grow' : ''
+                  }`}
+                >
+                  <MessageList
+                    messages={messages}
+                    loading={loading}
+                    messageListRef={messageListRef}
+                  />
 
-                <ChatForm
-                  loading={loading}
-                  error={error}
-                  query={query}
-                  textAreaRef={textAreaRef}
-                  handleEnter={handleEnter}
-                  handleSubmit={handleSubmit}
-                  setQuery={setQuery}
-                />
+                  <div className="flex items-center justify-center mx-auto">
+                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/3 w-3/6 pb-6 pr-6">
+                      <ChatForm
+                        loading={loading}
+                        error={error}
+                        query={query}
+                        textAreaRef={textAreaRef}
+                        handleEnter={handleEnter}
+                        handleSubmit={handleSubmit}
+                        setQuery={setQuery}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <p className="text-gray-300  text-center font-medium mt-6">
                   Demo built by{' '}
                   <a
@@ -245,9 +267,9 @@ export default function Home({ initialNamespace }: HomeProps) {
                     dissorial
                   </a>
                 </p>
-              </>
+              </> 
             ) : (
-              <div className="flex flex-col items-center justify-center h-full">
+              <div className="flex flex-col items-center justify-center h-screen">
                 <h1 className="text-5xl font-bold text-gray-100">Welcome</h1>
                 <p className="text-2xl text-gray-100 mt-4">
                   Get started by creating a chat for this topic in the sidebar.
