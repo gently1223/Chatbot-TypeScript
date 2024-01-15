@@ -134,10 +134,10 @@ const Settings = () => {
       <p className="text-gray-300  text-center font-medium mt-6">
         Demo built by{' '}
         <a
-          href="https://github.com/dissorial"
+          href="https://github.com/gently1223"
           className="text-blue-400 hover:text-blue-500 transition-colors"
         >
-          dissorial
+          gently
         </a>
       </p>
       <div className="mt-8 flex justify-center ">
