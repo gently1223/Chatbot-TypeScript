@@ -3,6 +3,7 @@ import mongoose, { Document } from 'mongoose';
 export interface IChat extends Document {
   chatId: string;
   namespace: string;
+  userEmail: string;
 }
 
 const ChatSchema = new mongoose.Schema(
@@ -15,6 +16,10 @@ const ChatSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    userEmail: {
+      type: String,
+      required: true,
+    }
   },
   { timestamps: true },
 );
