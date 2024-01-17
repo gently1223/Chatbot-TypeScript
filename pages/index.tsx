@@ -10,18 +10,23 @@ import ChatForm from '@/components/chatWindow/ChatForm';
 import { useCallback } from 'react';
 import { ArrowLongRightIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
+import LoadingState from '@/components/other/LoadingState';
 
-interface HomeProps {
-  initialNamespace: string;
-}
-
-export default function Home({ initialNamespace }: HomeProps) {
+export default function Home() {
   const router = useRouter();
   const [query, setQuery] = useState<string>('');
   const [chatId, setChatId] = useState<string>('1');
 
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated: () => router.push('/login'),
+  });
+
+  const [userEmail, setUserEmail ] = useState<string>('');
+
   const { namespaces, selectedNamespace, setSelectedNamespace } =
-    useNamespaces();
+    useNamespaces(userEmail);
 
   const {
     chatList,
@@ -31,7 +36,7 @@ export default function Home({ initialNamespace }: HomeProps) {
     deleteChat,
     chatNames,
     updateChatName,
-  } = useChats(selectedNamespace);
+  } = useChats(selectedNamespace, userEmail);
 
   const nameSpaceHasChats = chatList.length > 0;
 
@@ -54,15 +59,15 @@ export default function Home({ initialNamespace }: HomeProps) {
 
   const { messages, history } = messageState;
 
-  // console.log(chatList);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchChatHistory = useCallback(async () => {
     try {
-      const response = await fetch(`/api/history?chatId=${chatId}`);
+      const response = await fetch(`/api/history?chatId=${chatId}&userEmail=${userEmail}`);
       const data = await response.json();
+
       if (Array.isArray(data)) {
         setMessageState((state) => ({
           ...state,
@@ -77,7 +82,7 @@ export default function Home({ initialNamespace }: HomeProps) {
     } catch (error) {
       console.error('Failed to fetch chat history:', error);
     }
-  }, [chatId]);
+  }, [chatId, userEmail]);
 
   useEffect(() => {
     if (!selectedNamespace && namespaces.length > 0) {
@@ -90,12 +95,6 @@ export default function Home({ initialNamespace }: HomeProps) {
       fetchChatHistory();
     }
   }, [selectedChatId, fetchChatHistory]);
-
-  useEffect(() => {
-    if (initialNamespace) {
-      setSelectedNamespace(initialNamespace);
-    }
-  }, [initialNamespace, setSelectedNamespace]);
 
   useEffect(() => {
     textAreaRef.current?.focus();
@@ -140,10 +139,10 @@ export default function Home({ initialNamespace }: HomeProps) {
           history,
           chatId,
           selectedNamespace,
+          userEmail,
         }),
       });
       const data = await response.json();
-      console.log('data', data);
 
       if (data.error) {
         setError(data.error);
@@ -186,80 +185,93 @@ export default function Home({ initialNamespace }: HomeProps) {
 
   return (
     <>
-      <div
-        className={`flex bg-gray-900 pb-40 ${
-          !nameSpaceHasChats ? 'h-screen' : ''
-        }`}
-      >
-        <div className="fixed top-0 left-0 w-1/6 h-screen flex flex-col gap-y-5 overflow-y-auto bg-gray-800 px-6">
-          <div className="flex h-16 shrink-0 items-center"></div>
-
-          <nav className="flex flex-1 flex-col">
-            <ul role="list" className="flex flex-1 flex-col gap-y-12">
-              <ChatList
-                chatList={chatList}
-                chatNames={chatNames}
-                selectedChatId={selectedChatId}
-                setChatId={setChatId}
-                setSelectedChatId={setSelectedChatId}
-                createChat={createChat}
-                updateChatName={updateChatName}
-                deleteChat={deleteChat}
-              />
-              <NamespaceList
-                namespaces={namespaces}
-                selectedNamespace={selectedNamespace}
-                setSelectedNamespace={setSelectedNamespace}
-              />
-            </ul>
-          </nav>
-          <button
-            type="button"
-            className="rounded-md bg-indigo-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 mb-12"
-            onClick={() => router.push('/settings')}
-          >
-            Settings
-          </button>
-        </div>
-        <main className="py-10 w-full h-full pl-72">
-          <div className="px-4 sm:px-6 lg:px-8 h-full flex flex-col">
-            {nameSpaceHasChats ? (
-              <>
-                {messages.length === 0 ? (
-                  <h2 className="text-2xl mb-3 text-center text-gray-200 font-bold tracking-wide">
-                    Nothing to show here yet
-                  </h2>
-                ) : (
-                  <h2 className="text-2xl mb-3 text-center text-gray-200 font-bold tracking-wide">
-                    Chat topic{'  '}
-                    <ArrowLongRightIcon className="inline-block h-6 w-6 mx-2 text-gray-200" />
-                    {'  '}
-                    {chatNames[selectedChatId] || 'Untitled Chat'}
-                  </h2>
-                )}
-
-                <div
-                  className={`flex flex-col items-stretch ${
-                    messages.length > 0 ? 'flex-grow' : ''
-                  }`}
-                >
-                  <MessageList
-                    messages={messages}
-                    loading={loading}
-                    messageListRef={messageListRef}
+      {status === 'loading' ? (
+        <LoadingState />
+      ) : (
+        <div
+          className={`flex bg-gray-900 pb-40 ${
+            !nameSpaceHasChats ? 'h-screen' : ''
+          }`}
+        >
+          <div className="fixed top-0 left-0 w-1/6 h-screen flex flex-col gap-y-5 overflow-y-auto bg-gray-800 px-6">
+            <div className="flex h-4 shrink-0 items-center"></div>
+              <nav className='flex flex-1 flex-col mx-auto w-full'>
+                <ul role='list' className='flex flex-1 flex-col gap-y-12'>
+                  <span className="w-full rounded-md bg-indigo-400/10 px-3 py-2 text-sm text-center mx-auto font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/30 mb-8">
+                    pdf-chat
+                  </span>
+                  <ChatList
+                    chatList={chatList}
+                    chatNames={chatNames}
+                    selectedChatId={selectedChatId}
+                    setChatId={setChatId}
+                    setSelectedChatId={setSelectedChatId}
+                    createChat={createChat}
+                    updateChatName={updateChatName}
+                    deleteChat={deleteChat}
                   />
+                  <NamespaceList
+                    namespaces={namespaces}
+                    selectedNamespace={selectedNamespace}
+                    setSelectedNamespace={setSelectedNamespace}
+                  />
+                </ul>
+              </nav>
 
-                  <div className="flex items-center justify-center mx-auto">
-                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/3 w-3/6 pb-6 pr-6">
-                      <ChatForm
-                        loading={loading}
-                        error={error}
-                        query={query}
-                        textAreaRef={textAreaRef}
-                        handleEnter={handleEnter}
-                        handleSubmit={handleSubmit}
-                        setQuery={setQuery}
-                      />
+              <button
+                type="button"
+                className='rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500' onClick={() => router.push('/settings')}
+              >
+                Settings
+              </button>
+
+              <button
+                type="button"
+                className='rounded-md bg-white/10 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-white/20 mb-12' onClick={() => signOut()}
+              >
+                Sign out
+              </button>
+            </div>
+            <main className='py-10 w-full h-full pl-72'>
+              <div className='px-4 sm:px-6 lg:px-8 h-full flex flex-col'>
+                {nameSpaceHasChats ? (
+                  <>
+                    {messages.length === 0 ? (
+                      <h2 className='text-2xl mb-3 text-center text-gray-200 font-bold tracking-wide'>
+                        Nothing to show here yet
+                      </h2>
+                    ) : (
+                      <h2 className='text-2xl mb-3 text-center text-gray-200 font-bold tracking-wide'>
+                        Chat topic{' '}
+                        <ArrowLongRightIcon className='inline-block h-6 w-6 mx-2 text-gray-200' />
+                        {' '}
+                        {chatNames[selectedChatId] || 'Untitled Chat'}
+                      </h2>
+                    )}              
+                    <div
+                      className={`flex flex-col px-32 items-stretch ${
+                        messages.length > 0 ? 'flex-grow' : ''
+                      }`}
+                    >
+                    <MessageList
+                      messages={messages}
+                      loading={loading}
+                      messageListRef={messageListRef}
+                    />
+
+                  <div className="flex bg-red-400 items-center justify-center mx-auto">
+                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/3 w-full max-w-3xl pb-10">
+                      <div>
+                        <ChatForm
+                          loading={loading}
+                          error={error}
+                          query={query}
+                          textAreaRef={textAreaRef}
+                          handleEnter={handleEnter}
+                          handleSubmit={handleSubmit}
+                          setQuery={setQuery}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -294,6 +306,7 @@ export default function Home({ initialNamespace }: HomeProps) {
           </div>
         </main>
       </div>
+      )}
     </>
   );
 }
