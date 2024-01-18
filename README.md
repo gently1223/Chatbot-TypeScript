@@ -19,6 +19,22 @@
 
 ---
 
+**Landing page**
+![Landing page](public/images/landing-page.png)
+
+---
+
+**Main chat area**
+![Main chat area](public/images/pdf-chatbot-screenshot.png)
+
+---
+
+**Setting page**
+
+![Settings page](public/images/setting.png)
+
+---
+
 ## Disclaimer
 
 This repository was originally a fork of [GPT-4 & LangChain](https://github.com/mayooear/gpt4-pdf-chatbot-langchain) repository by [mayooear](https://github.com/mayooear/gpt4-pdf-chatbot-langchain). I planned on making small changes to satisfy my needs but ended up:
