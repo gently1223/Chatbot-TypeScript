@@ -58,8 +58,6 @@ git clone https://github.com/gently1223/Chatbot-TypeScript.git
 
 This repository has two branches: `master` and `old-master`. The `old-master` branch contains working code that you can run locally and has all the features except for Google OAuth. If you want to avoid setting up Google OAuth, clone that branch with:
 
-```
-
 ### 2. Install packages
 
 ```
