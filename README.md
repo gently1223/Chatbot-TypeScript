@@ -31,7 +31,7 @@
 
 **Setting page**
 
-![Settings page](public/images/setting.png)
+![Settings page](public/images/settings.png)
 
 ---
 
