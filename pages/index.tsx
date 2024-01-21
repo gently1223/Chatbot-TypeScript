@@ -68,6 +68,12 @@ export default function Home() {
       const response = await fetch(`/api/history?chatId=${chatId}&userEmail=${userEmail}`);
       const data = await response.json();
 
+      const pairedMessages: [any, any][] = [];
+
+      for (let i = 0; i < data.length; i += 2) {
+        pairedMessages.push([data[i], data[i + 1]]);
+      }
+
       if (Array.isArray(data)) {
         setMessageState((state) => ({
           ...state,
@@ -75,6 +81,10 @@ export default function Home() {
             type: message.sender === 'user' ? 'userMessage' : 'apiMessage',
             message: message.content,
           })),
+          history: pairedMessages.map(([userMessage, botMessage]: any) => [
+            userMessage.content,
+            botMessage?.content || '',
+          ]),
         }));
       } else {
         console.error('Invalid data format:', data);
@@ -160,7 +170,6 @@ export default function Home() {
           history: [...state.history, [question, data.text]],
         }));
       }
-      console.log('messageState', messageState);
 
       setLoading(false);
 
