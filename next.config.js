@@ -6,6 +6,9 @@ const nextConfig = {
     config.experiments = { ...config.experiments, topLevelAwait: true, asyncWebAssembly: true, layer: true };
     return config;
   },
+  images: {
+    domains: ['lh3.googleusercontent.com'],
+  },
 };
 
 export default nextConfig;
